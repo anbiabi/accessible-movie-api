@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
 import { Header } from './components/Header';
+import { AIAssistant } from './components/AIAssistant';
 import { HomePage } from './pages/HomePage';
 import { SearchPage } from './pages/SearchPage';
 import { MovieDetailsPage } from './pages/MovieDetailsPage';
@@ -35,6 +36,7 @@ export default function App() {
                 <Route path="/accessibility" element={<AccessibilityPage />} />
               </Routes>
             </main>
+            <AIAssistant />
             <Toaster />
           </div>
         </Router>

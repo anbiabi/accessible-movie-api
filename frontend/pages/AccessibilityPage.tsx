@@ -2,22 +2,26 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AccessibilityControls } from '../components/AccessibilityControls';
-import { Volume2, Captions, Eye, Keyboard, Monitor, Headphones } from 'lucide-react';
+import { ContentScraper } from '../components/ContentScraper';
+import { Volume2, Captions, Eye, Keyboard, Monitor, Headphones, Bot, Globe } from 'lucide-react';
 
 export function AccessibilityPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="text-center">
-        <h1 className="text-3xl font-bold mb-4">Accessibility Features</h1>
+        <h1 className="text-3xl font-bold mb-4">Accessibility Features & AI Tools</h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          AccessiCinema is designed to be fully accessible to users with disabilities. 
-          Customize your experience and learn about our comprehensive accessibility features.
+          AccessiCinema combines comprehensive accessibility features with AI-powered automation 
+          to create the world's most inclusive movie discovery platform.
         </p>
       </div>
 
       {/* Accessibility Controls */}
       <AccessibilityControls />
+
+      {/* AI Content Scraper */}
+      <ContentScraper />
 
       {/* Feature Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -30,12 +34,50 @@ export function AccessibilityPage() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              Detailed narration of visual elements, actions, and scene changes for visually impaired users.
+              AI-generated and professional narration of visual elements, actions, and scene changes for visually impaired users.
             </p>
             <div className="space-y-2">
               <Badge variant="outline">Professional Narration</Badge>
-              <Badge variant="outline">Scene Descriptions</Badge>
-              <Badge variant="outline">Character Actions</Badge>
+              <Badge variant="outline">AI-Enhanced Descriptions</Badge>
+              <Badge variant="outline">Scene Analysis</Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bot className="h-5 w-5" aria-hidden="true" />
+              AI Assistant
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground mb-4">
+              Intelligent assistant that helps with navigation, recommendations, and accessibility features using voice commands.
+            </p>
+            <div className="space-y-2">
+              <Badge variant="outline">Voice Commands</Badge>
+              <Badge variant="outline">Personalized Help</Badge>
+              <Badge variant="outline">Proactive Assistance</Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5" aria-hidden="true" />
+              Content Discovery
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground mb-4">
+              AI-powered web scraping automatically discovers and adds accessible content from across the internet.
+            </p>
+            <div className="space-y-2">
+              <Badge variant="outline">Automated Scraping</Badge>
+              <Badge variant="outline">Content Analysis</Badge>
+              <Badge variant="outline">Accessibility Verification</Badge>
             </div>
           </CardContent>
         </Card>
@@ -136,6 +178,38 @@ export function AccessibilityPage() {
         </Card>
       </div>
 
+      {/* AI Features */}
+      <Card>
+        <CardHeader>
+          <CardTitle>AI-Powered Accessibility Features</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground mb-4">
+            Our AI automation agent continuously improves the accessibility experience through intelligent content discovery and user assistance.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-semibold mb-2">Automated Content Discovery</h4>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• Scrapes the internet for accessible content</li>
+                <li>• Analyzes movies and documentaries for accessibility features</li>
+                <li>• Generates AI-powered audio descriptions</li>
+                <li>• Verifies and categorizes accessibility levels</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-2">Intelligent User Assistance</h4>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• Voice-activated navigation and search</li>
+                <li>• Personalized accessibility recommendations</li>
+                <li>• Proactive assistance based on user behavior</li>
+                <li>• Context-aware help and guidance</li>
+              </ul>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* WCAG Compliance */}
       <Card>
         <CardHeader>
@@ -143,14 +217,14 @@ export function AccessibilityPage() {
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground mb-4">
-            AccessiCinema meets and exceeds Web Content Accessibility Guidelines (WCAG) 2.1 Level AA standards.
+            AccessiCinema meets and exceeds Web Content Accessibility Guidelines (WCAG) 2.1 Level AA standards with AI enhancements.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h4 className="font-semibold mb-2">Perceivable</h4>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Alternative text for all images</li>
-                <li>• Captions and audio descriptions</li>
+                <li>• AI-generated alternative text for all images</li>
+                <li>• Automated captions and audio descriptions</li>
                 <li>• Sufficient color contrast ratios</li>
                 <li>• Resizable text up to 200%</li>
               </ul>
@@ -158,17 +232,17 @@ export function AccessibilityPage() {
             <div>
               <h4 className="font-semibold mb-2">Operable</h4>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Full keyboard accessibility</li>
+                <li>• Full keyboard and voice accessibility</li>
                 <li>• No seizure-inducing content</li>
                 <li>• Sufficient time limits</li>
-                <li>• Clear navigation structure</li>
+                <li>• AI-guided navigation structure</li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold mb-2">Understandable</h4>
               <ul className="text-sm text-muted-foreground space-y-1">
                 <li>• Clear and simple language</li>
-                <li>• Predictable functionality</li>
+                <li>• Predictable AI-enhanced functionality</li>
                 <li>• Input assistance and error prevention</li>
                 <li>• Consistent navigation patterns</li>
               </ul>
@@ -193,13 +267,14 @@ export function AccessibilityPage() {
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground mb-4">
-            We're committed to continuous improvement of our accessibility features. 
+            We're committed to continuous improvement of our accessibility features through AI and user feedback. 
             If you encounter any barriers or have suggestions, please let us know.
           </p>
           <div className="space-y-2 text-sm">
             <p><strong>Email:</strong> accessibility@accessicinema.com</p>
             <p><strong>Phone:</strong> 1-800-ACCESS (1-800-222-3771)</p>
             <p><strong>TTY:</strong> 1-800-855-2880</p>
+            <p><strong>AI Assistant:</strong> Available 24/7 through the platform</p>
           </div>
         </CardContent>
       </Card>

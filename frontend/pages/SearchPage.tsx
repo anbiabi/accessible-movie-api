@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Search, Loader2, AlertCircle } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { MovieCard } from '../components/MovieCard';
 import { AdvancedSearchFilters } from '../components/AdvancedSearchFilters';
 import { VoiceNavigation } from '../components/VoiceNavigation';
+import { SmartSearch } from '../components/SmartSearch';
+import { AIAssistant } from '../components/AIAssistant';
 import { useAccessibility } from '../contexts/AccessibilityContext';
 import backend from '~backend/client';
 
@@ -26,14 +26,15 @@ interface SearchFilters {
 
 export function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [filters, setFilters] = useState<SearchFilters>({});
   const [showFilters, setShowFilters] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchInsights, setSearchInsights] = useState<any>(null);
   const { announceToScreenReader } = useAccessibility();
 
   const query = searchParams.get('q') || '';
 
-  const { data: searchResults, isLoading, error } = useQuery({
+  const { data: basicSearchResults, isLoading, error } = useQuery({
     queryKey: ['search-movies', query, filters],
     queryFn: () => backend.movies.search({ 
       query, 
@@ -41,9 +42,12 @@ export function SearchPage() {
       limit: 20,
       ...filters
     }),
-    enabled: !!query,
+    enabled: !!query && searchResults.length === 0,
     onSuccess: (data) => {
-      announceToScreenReader(`Found ${data.totalResults} movies for "${query}"`);
+      if (searchResults.length === 0) {
+        setSearchResults(data.movies);
+        announceToScreenReader(`Found ${data.totalResults} movies for "${query}"`);
+      }
     },
     onError: () => {
       announceToScreenReader('Search failed. Please try again.');
@@ -51,27 +55,33 @@ export function SearchPage() {
   });
 
   useEffect(() => {
-    setSearchQuery(searchParams.get('q') || '');
+    // Clear results when query changes
+    if (query !== searchParams.get('q')) {
+      setSearchResults([]);
+      setSearchInsights(null);
+    }
   }, [searchParams]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      setSearchParams({ q: searchQuery.trim() });
+  const handleSmartSearchResults = (results: any[]) => {
+    setSearchResults(results);
+    if (results.length > 0) {
+      announceToScreenReader(`Smart search found ${results.length} results`);
     }
+  };
+
+  const handleSearchInsights = (insights: any) => {
+    setSearchInsights(insights);
   };
 
   const handleVoiceCommand = (action: string, data?: any) => {
     switch (action) {
       case 'search':
         if (data?.query) {
-          setSearchQuery(data.query);
           setSearchParams({ q: data.query });
         }
         break;
       case 'filter':
         if (data?.filter) {
-          // Parse filter command and apply
           const filterType = data.filter.toLowerCase();
           if (filterType.includes('audio description')) {
             setFilters(prev => ({ ...prev, hasAudioDescription: true }));
@@ -85,51 +95,58 @@ export function SearchPage() {
     }
   };
 
+  const handleAIAction = (action: string, data?: any) => {
+    switch (action) {
+      case 'search':
+      case 'search_assistance':
+        if (data?.query) {
+          setSearchParams({ q: data.query });
+        }
+        break;
+      case 'filter':
+        if (data?.filter) {
+          // Apply AI-suggested filters
+          setFilters(prev => ({ ...prev, ...data.filter }));
+        }
+        break;
+      case 'recommend':
+        // Navigate to recommendations or apply recommendation filters
+        setFilters(prev => ({ ...prev, sortBy: 'accessibility_score', sortOrder: 'desc' }));
+        break;
+    }
+  };
+
   const clearFilters = () => {
     setFilters({});
     announceToScreenReader('All filters cleared');
   };
 
+  const displayResults = searchResults.length > 0 ? searchResults : (basicSearchResults?.movies || []);
+  const totalResults = searchResults.length > 0 ? searchResults.length : (basicSearchResults?.totalResults || 0);
+
   return (
     <div className="space-y-6">
       {/* Search Header */}
       <div className="text-center">
-        <h1 className="text-3xl font-bold mb-4">Search Accessible Movies</h1>
+        <h1 className="text-3xl font-bold mb-4">AI-Enhanced Search</h1>
         <p className="text-muted-foreground mb-6">
-          Find movies with audio descriptions, closed captions, and other accessibility features
+          Find accessible movies and documentaries with intelligent search and voice commands
         </p>
       </div>
+
+      {/* Smart Search */}
+      <SmartSearch
+        onResults={handleSmartSearchResults}
+        onInsights={handleSearchInsights}
+        placeholder="Search for accessible movies, documentaries, and more..."
+        autoFocus={!query}
+      />
 
       {/* Voice Navigation */}
       <VoiceNavigation 
         context="search" 
         onCommand={handleVoiceCommand}
       />
-
-      {/* Search Form */}
-      <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
-        <div className="flex gap-2">
-          <label htmlFor="search-input" className="sr-only">
-            Search for movies with accessibility features
-          </label>
-          <Input
-            id="search-input"
-            type="search"
-            placeholder="Search for accessible movies, actors, directors..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1"
-            aria-describedby="search-help"
-          />
-          <Button type="submit" aria-label="Search movies">
-            <Search className="h-4 w-4 mr-2" aria-hidden="true" />
-            Search
-          </Button>
-        </div>
-        <p id="search-help" className="text-sm text-muted-foreground mt-2 text-center">
-          Search includes movie titles, descriptions, and narrated content
-        </p>
-      </form>
 
       {/* Advanced Filters */}
       <AdvancedSearchFilters
@@ -147,17 +164,18 @@ export function SearchPage() {
             <h2 className="text-xl font-semibold">
               Search Results for "{query}"
             </h2>
-            {searchResults && (
-              <div className="text-sm text-muted-foreground">
-                <p>{searchResults.totalResults} results found</p>
-                {Object.keys(searchResults.appliedFilters).length > 0 && (
-                  <p>Filters applied</p>
-                )}
-              </div>
-            )}
+            <div className="text-sm text-muted-foreground">
+              <p>{totalResults} results found</p>
+              {searchInsights && searchInsights.accessibilityMatches > 0 && (
+                <p>{searchInsights.accessibilityMatches} with accessibility features</p>
+              )}
+              {Object.keys(filters).length > 0 && (
+                <p>Filters applied</p>
+              )}
+            </div>
           </div>
 
-          {isLoading && (
+          {isLoading && searchResults.length === 0 && (
             <div className="flex items-center justify-center min-h-64" role="status" aria-live="polite">
               <Loader2 className="h-8 w-8 animate-spin mr-2" aria-hidden="true" />
               <span>Searching accessible movies...</span>
@@ -173,16 +191,28 @@ export function SearchPage() {
             </Alert>
           )}
 
-          {searchResults && searchResults.movies.length > 0 && (
+          {displayResults.length > 0 && (
             <div 
               className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"
               role="grid"
               aria-label={`Search results for ${query}`}
             >
-              {searchResults.movies.map((movie) => (
-                <div key={movie.id} role="gridcell">
+              {displayResults.map((movie) => (
+                <div key={movie.id || movie.movieId} role="gridcell">
                   <MovieCard 
-                    movie={movie} 
+                    movie={movie.id ? movie : { 
+                      id: movie.movieId, 
+                      title: movie.title,
+                      overview: movie.overview,
+                      posterPath: movie.posterPath,
+                      voteAverage: movie.relevanceScore * 10,
+                      voteCount: 100,
+                      genres: [],
+                      accessibilityFeatures: {},
+                      audioDescriptionAvailable: movie.accessibilityScore > 0.3,
+                      closedCaptionsAvailable: movie.accessibilityScore > 0.3,
+                      signLanguageAvailable: movie.accessibilityScore > 0.5
+                    }} 
                     showFavoriteButton={false}
                   />
                 </div>
@@ -190,18 +220,21 @@ export function SearchPage() {
             </div>
           )}
 
-          {searchResults && searchResults.movies.length === 0 && (
+          {displayResults.length === 0 && !isLoading && !error && query && (
             <div className="text-center py-12">
               <p className="text-muted-foreground mb-4">
                 No accessible movies found for "{query}".
               </p>
               <p className="text-sm text-muted-foreground mb-4">
-                Try adjusting your search terms or filters.
+                Try adjusting your search terms, using the AI assistant, or clearing filters.
               </p>
               {Object.keys(filters).length > 0 && (
-                <Button variant="outline" onClick={clearFilters}>
+                <button
+                  onClick={clearFilters}
+                  className="text-primary hover:underline"
+                >
                   Clear Filters
-                </Button>
+                </button>
               )}
             </div>
           )}
@@ -211,29 +244,35 @@ export function SearchPage() {
       {/* Search Tips */}
       {!query && (
         <div className="max-w-2xl mx-auto bg-muted/50 rounded-lg p-6">
-          <h3 className="font-semibold mb-3">Enhanced Search Features</h3>
+          <h3 className="font-semibold mb-3">AI-Enhanced Search Features</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <h4 className="font-medium mb-2">Search Options</h4>
+              <h4 className="font-medium mb-2">Smart Search</h4>
               <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>• Search by movie title, actor, or director</li>
-                <li>• Use keywords like "audio description" or "closed captions"</li>
-                <li>• Search includes narrated descriptions</li>
-                <li>• Voice commands supported</li>
+                <li>• Natural language understanding</li>
+                <li>• Accessibility-focused results</li>
+                <li>• Semantic content matching</li>
+                <li>• Voice command support</li>
               </ul>
             </div>
             <div>
-              <h4 className="font-medium mb-2">Filter Options</h4>
+              <h4 className="font-medium mb-2">AI Assistant</h4>
               <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>• Filter by genre and release year</li>
-                <li>• Set rating ranges</li>
-                <li>• Filter by accessibility features</li>
-                <li>• Sort by accessibility score</li>
+                <li>• Personalized recommendations</li>
+                <li>• Proactive search suggestions</li>
+                <li>• Context-aware filtering</li>
+                <li>• Accessibility guidance</li>
               </ul>
             </div>
           </div>
         </div>
       )}
+
+      {/* AI Assistant for Search Context */}
+      <AIAssistant 
+        context="search"
+        onAction={handleAIAction}
+      />
     </div>
   );
 }
